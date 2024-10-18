@@ -1,0 +1,426 @@
+openapi: 3.0.0
+info:
+    title: Employee and Service Request API
+    version: 1.0.0
+servers:
+    - url: http://localhost:8080
+      description: Local server
+
+paths:
+    /employee/login:
+        post:
+            summary: Employee login
+            tags:
+                - employee
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginRequest'
+            responses:
+                '200':
+                    description: Login successful
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status:
+                                        type: string
+
+    /employee/verify:
+        post:
+            summary: Verify OTP for employee login
+            tags:
+                - employee
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VerifyOtpRequest'
+            responses:
+                '200':
+                    description: OTP verified successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status:
+                                        type: string
+
+    /employee/logout:
+        post:
+            summary: Employee logout
+            tags:
+                - employee
+            responses:
+                '200':
+                    description: Logout successful
+
+    /employee/self:
+        get:
+            summary: Get current employee details
+            tags:
+                - employee
+            responses:
+                '200':
+                    description: Current employee details
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/EmployeeSelfResponse'
+
+    /employee/exist:
+        post:
+            summary: Verify if an employee exists
+            tags:
+                - employee
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VerifyEmployeeExistRequest'
+            responses:
+                '200':
+                    description: Employee existence status
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    exist:
+                                        type: boolean
+
+    /servicerequest:
+        post:
+            summary: Create a service request
+            tags:
+                - servicerequest
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateServiceRequest'
+            responses:
+                '201':
+                    description: Service request created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ServiceRequest'
+        get:
+            summary: Get paginated service requests
+            tags:
+                - servicerequest
+            parameters:
+                - in: query
+                  name: pagenum
+                  schema:
+                      type: integer
+                  required: true
+            responses:
+                '200':
+                    description: Paginated list of service requests
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/ServiceRequest'
+
+    /servicerequest/{id}:
+        get:
+            summary: Get service request by ID
+            tags:
+                - servicerequest
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Service request details
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ServiceRequest'
+        delete:
+            summary: Delete service request by ID
+            tags:
+                - servicerequest
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Service request deleted
+        patch:
+            summary: Edit service request by ID
+            tags:
+                - servicerequest
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/EditServiceRequest'
+            responses:
+                '200':
+                    description: Service request updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ServiceRequest'
+
+components:
+    schemas:
+        LoginRequest:
+            type: object
+            properties:
+                email:
+                    type: string
+                    format: email
+            required:
+                - email
+
+        VerifyOtpRequest:
+            type: object
+            properties:
+                otp:
+                    type: string
+            required:
+                - otp
+
+        Employee:
+            type: object
+            properties:
+                ID:
+                    type: string
+                userID:
+                    type: integer
+                department:
+                    type: string
+                reportingManagerID:
+                    type: string
+                allocatedPerDiem:
+                    type: integer
+            required:
+                - ID
+                - userID
+
+        VerifyEmployeeExistRequest:
+            type: object
+            properties:
+                id:
+                    type: string
+            required:
+                - id
+
+        EmployeeSelfResponse:
+            type: object
+            properties:
+                currentUser:
+                    type: object
+                    properties:
+                        ID:
+                            type: string
+                        email:
+                            type: string
+                            format: email
+                        phone:
+                            type: string
+                        firstName:
+                            type: string
+                        lastName:
+                            type: string
+                        userType:
+                            type: string
+                            enum:
+                                - EMPLOYEE
+                                - VENDOR
+                                - ADMIN
+            required:
+                - currentUser
+
+        Vendor:
+            type: object
+            properties:
+                ID:
+                    type: integer
+                company:
+                    type: string
+                service:
+                    type: string
+            required:
+                - ID
+                - company
+
+        CreateVendorRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                contact_no:
+                    type: string
+                pan:
+                    type: string
+                tan:
+                    type: string
+                bank_name:
+                    type: string
+                bank_beneficiary_name:
+                    type: string
+                email:
+                    type: string
+                    format: email
+                registered_address:
+                    type: string
+                gst_number:
+                    type: string
+                msme_number:
+                    type: string
+                credit_period:
+                    type: integer
+                service:
+                    type: string
+                place_of_supply:
+                    type: string
+            required:
+                - name
+                - contact_no
+                - pan
+                - tan
+                - bank_name
+                - bank_beneficiary_name
+                - email
+                - registered_address
+                - gst_number
+                - msme_number
+                - credit_period
+                - service
+                - place_of_supply
+
+        ServiceRequest:
+            type: object
+            properties:
+                ID:
+                    type: string
+                employeeID:
+                    type: string
+                serviceType:
+                    type: string
+                    enum:
+                        - Flight
+                        - Hotel
+                        - Cab
+                reasonForTravel:
+                    type: string
+                    enum:
+                        - DGCA
+                        - Airport_Visit
+                        - Audit
+                        - Workshop_Seminar
+                        - Sales_Travel
+                        - Partner_Visit
+                status:
+                    type: string
+                    enum:
+                        - Submitted
+                        - In_Progress
+                        - Confirmed
+                        - Completed
+                        - Rejected
+                        - Cancelled
+                urgentRequest:
+                    type: boolean
+                reviewed:
+                    type: boolean
+            required:
+                - ID
+                - employeeID
+                - serviceType
+                - reasonForTravel
+                - status
+                - urgentRequest
+                - reviewed
+
+        CreateServiceRequest:
+            type: object
+            properties:
+                reasonForTravel:
+                    type: string
+                    enum:
+                        - DGCA
+                        - Airport_Visit
+                        - Audit
+                        - Workshop_Seminar
+                        - Sales_Travel
+                        - Partner_Visit
+                urgentRequest:
+                    type: boolean
+                serviceType:
+                    type: string
+                    enum:
+                        - Flight
+                        - Hotel
+                        - Cab
+                additionalDetails:
+                    type: object
+                    description: 'Details specific to the type of service request (Flight, Hotel, Cab).'
+            required:
+                - reasonForTravel
+                - urgentRequest
+                - serviceType
+                - additionalDetails
+
+        DeleteServiceRequest:
+            type: object
+            properties:
+                id:
+                    type: string
+            required:
+                - id
+
+        GetServiceRequestByID:
+            type: object
+            properties:
+                id:
+                    type: string
+            required:
+                - id
+
+        EditServiceRequest:
+            type: object
+            properties:
+                id:
+                    type: string
+                data:
+                    type: object
+                    description: 'The updated data for the service request, which can include any updatable fields.'
+            required:
+                - id
+                - data
+
+        PaginatedServiceRequests:
+            type: object
+            properties:
+                pagenum:
+                    type: integer
+            required:
+                - pagenum

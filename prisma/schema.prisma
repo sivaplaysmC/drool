@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  email          String    @unique
+  phone          String    @unique
+  userType       UserType
+  resendOtpCount Int       @default(0)
+  ID             Int       @id @default(autoincrement())
+  firstName      String?
+  lastName       String?
+  admin          Admin?
+  employee       Employee?
+  Otp            Otp?
+  vendor         Vendor?
+}
+
+model Employee {
+  department         String?
+  allocatedPerDiem   Int?
+  ID                 String           @id @unique
+  reportingManagerID String?
+  userID             Int              @unique
+  reportingManager   Employee?        @relation("ManagerRelation", fields: [reportingManagerID], references: [ID])
+  subordinates       Employee[]       @relation("ManagerRelation")
+  user               User             @relation(fields: [userID], references: [ID])
+  serviceRequests    ServiceRequest[] @relation("EmployeeServiceRequests")
+}
+
+model Vendor {
+  company String
+  service String?
+  ID      Int     @id @default(autoincrement())
+  userID  Int     @unique
+  user    User    @relation(fields: [userID], references: [ID])
+}
+
+model Admin {
+  role        String
+  permissions String?
+  ID          Int     @id @default(autoincrement())
+  userID      Int     @unique
+  user        User    @relation(fields: [userID], references: [ID])
+}
+
+model ServiceRequest {
+  employeeID            String
+  reasonForTravel       ReasonForTravel
+  status                RequestStatus   @default(Submitted)
+  hodApprovalAttachment String?         @db.VarChar(255)
+  statusTimestamp       DateTime?       @default(now())
+  createdAt             DateTime        @default(now())
+  lastModifiedAt        DateTime?
+  serviceType           ServiceType
+  reviewed              Boolean         @default(false)
+  ID                    String          @id @unique
+  urgentRequest         Boolean         @default(false)
+  reasonForCancellation String?
+  CabRequest            CabRequest?
+  confirmations         Confirmation?
+  FlightRequest         FlightRequest?
+  HotelRequest          HotelRequest?
+  employee              Employee        @relation("EmployeeServiceRequests", fields: [employeeID], references: [ID])
+}
+
+model FlightRequest {
+  serviceRequestID        String          @unique
+  tripType                TripType
+  origin                  String[]
+  destination             String[]
+  departureDate           DateTime
+  arrivalDate             DateTime?
+  departureTimePreference DateTime?
+  arrivalTimePreference   DateTime?
+  createdAt               DateTime        @default(now())
+  seatPreference          SeatPreference?
+  class                   FlightClass
+  lastModifiedAt          DateTime?
+  ID                      Int             @id @default(autoincrement())
+  serviceRequest          ServiceRequest  @relation(fields: [serviceRequestID], references: [ID])
+}
+
+model HotelRequest {
+  serviceRequestID String         @unique
+  city             String
+  state            String?
+  checkInDate      DateTime
+  checkInTime      DateTime?
+  checkOutDate     DateTime
+  checkOutTime     DateTime?
+  createdAt        DateTime       @default(now())
+  ID               Int            @id @default(autoincrement())
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestID], references: [ID])
+}
+
+model CabRequest {
+  serviceRequestID String         @unique
+  city             String         @db.VarChar(100)
+  state            String?        @db.VarChar(100)
+  pickUpAddress    String         @db.VarChar(255)
+  dropAddress      String?        @db.VarChar(255)
+  dateOfTravel     DateTime
+  startTime        DateTime
+  endTime          DateTime?
+  pickUpTime       DateTime
+  createdAt        DateTime       @default(now())
+  ID               Int            @id @default(autoincrement())
+  requestType      CabRequestType
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestID], references: [ID])
+}
+
+model Confirmation {
+  serviceRequestID String         @unique
+  serviceType      ServiceType
+  perDiemAllowance Decimal?       @db.Decimal(10, 2)
+  confirmationDate DateTime       @default(now())
+  ID               Int            @id @default(autoincrement())
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestID], references: [ID])
+}
+
+model Otp {
+  otp       String   @unique
+  expiresAt DateTime
+  ID        Int      @id @default(autoincrement())
+  userID    Int      @unique
+  user      User     @relation(fields: [userID], references: [ID])
+}
+
+model Vendors {
+  name                  String
+  contact_no            String
+  pan                   String @unique
+  tan                   String
+  bank_name             String
+  bank_beneficiary_name String
+  email                 String
+  registered_address    String
+  gst_number            String
+  msme_number           String
+  msme_certificate      Bytes
+  cancelled_cheque      Bytes
+  credit_period         Int
+  service               String
+  place_of_supply       String
+  ID                    String @id @unique
+  status                String
+}
+
+enum UserType {
+  EMPLOYEE
+  VENDOR
+  ADMIN
+}
+
+enum ServiceType {
+  Flight
+  Hotel
+  Cab
+}
+
+enum RequestStatus {
+  Submitted
+  In_Progress
+  Confirmed
+  Completed
+  Rejected
+  Cancelled
+}
+
+enum ReasonForTravel {
+  DGCA
+  Airport_Visit
+  Audit
+  Workshop_Seminar
+  Sales_Travel
+  Partner_Visit
+}
+
+enum FlightClass {
+  Economy
+  Business
+  First_Class
+}
+
+enum TripType {
+  One_Way
+  Round_Trip
+  Multi_City
+}
+
+enum SeatPreference {
+  Window
+  Aisle
+  No_Preference
+}
+
+enum CabRequestType {
+  FULL_DAY
+  TRANSFER
+}
